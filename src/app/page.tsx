@@ -128,6 +128,8 @@ export default function DonationPage() {
                     <SelectItem value="USD">USD</SelectItem>
                     <SelectItem value="HKD">HKD</SelectItem>
                     <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="CAD">EUR</SelectItem>
+                    <SelectItem value="GBP">EUR</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
