@@ -72,7 +72,7 @@ export default function DonationPage() {
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center">Thank You for Your Donation!</CardTitle>
+            <CardTitle className="text-center">十分感谢您对我们战队DLsite的支持</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -94,8 +94,8 @@ export default function DonationPage() {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Make a Donation</CardTitle>
-          <CardDescription>Support our cause with a custom donation amount.</CardDescription>
+          <CardTitle>请支持我们的战队，为我们的战队投票</CardTitle>
+          <CardDescription>“我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”</CardDescription>
         </CardHeader>
         {!clientSecret ? (
           <form onSubmit={handleSubmit}>
