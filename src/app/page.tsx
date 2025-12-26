@@ -69,7 +69,7 @@ export default function DonationPage() {
 
   if (paymentStatus === 'succeeded') {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-center">十分感谢您对我们战队DLsite的支持</CardTitle>
@@ -91,7 +91,7 @@ export default function DonationPage() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 bg-[url('/background.svg')] bg-cover bg-center bg-no-repeat">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>请支持我们的战队，为我们的战队投票</CardTitle>
