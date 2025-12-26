@@ -3,8 +3,8 @@ import type { Metadata } from 'next'
 
 
 export const metadata: Metadata = {
-  title: 'Donation Project',
-  description: 'Support our cause with custom donations',
+  title: '是的，这是一份礼物',
+  description: '感谢您在DLsite上的购买',
 }
 
 export default function RootLayout({
