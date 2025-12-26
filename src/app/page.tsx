@@ -95,7 +95,7 @@ export default function DonationPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>请支持我们的战队，为我们的战队投票</CardTitle>
-          <CardDescription>“我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”</CardDescription>
+          <CardDescription>我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个</CardDescription>
         </CardHeader>
         {!clientSecret ? (
           <form onSubmit={handleSubmit}>
@@ -107,7 +107,7 @@ export default function DonationPage() {
                 <Input
                   id="amount"
                   type="number"
-                  placeholder="Enter amount"
+                  placeholder="添加社会点数"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
