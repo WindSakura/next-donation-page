@@ -1,5 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 export const metadata: Metadata = {
   title: '是的，这是一份礼物 | 为战队投票',
@@ -12,9 +14,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen antialiased bg-background text-foreground">
-        <main className="min-h-screen">{children}</main>
+        <ThemeProvider>
+          <ThemeSwitcher />
+          <main className="min-h-screen">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   )

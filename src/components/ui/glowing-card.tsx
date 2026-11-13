@@ -32,7 +32,7 @@ export function GlowingCard({
       {/* 实体卡片层 */}
       <div
         className={cn(
-          'relative z-10 w-full h-full rounded-[calc(1rem-1px)] bg-card/95 backdrop-blur-xl border border-white/10 shadow-2xl',
+          'relative z-10 w-full h-full rounded-[calc(1rem-1px)] bg-card/95 backdrop-blur-xl border border-slate-300/70 dark:border-white/10 shadow-2xl',
           className
         )}
       >
