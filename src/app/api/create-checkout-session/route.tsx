@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       return paymentJson({ code: 'INVALID_REQUEST_ID', error: '支付请求标识无效，请刷新页面后重试。' }, 400)
     }
     const session = await getStripe().checkout.sessions.create({
-      ui_mode: 'embedded',
+      ui_mode: 'embedded_page',
       line_items: [{
         price_data: {
           currency: body.currency.toLowerCase(),

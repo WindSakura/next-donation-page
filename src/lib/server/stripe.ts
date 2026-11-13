@@ -10,8 +10,8 @@ export function getStripe(): Stripe {
     throw new PaymentConfigurationError('Missing STRIPE_SECRET_KEY')
   }
   client ??= new Stripe(key, {
-    // Keep the existing payment API contract while upgrading the web framework.
-    apiVersion: '2024-06-20',
+    // Match stripe@23.1.0's types and keep protocol changes explicit on upgrades.
+    apiVersion: '2026-10-28.endive',
     timeout: 15_000,
     maxNetworkRetries: 1,
   })

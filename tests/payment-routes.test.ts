@@ -57,6 +57,9 @@ describe('create checkout session', () => {
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(await response.json()).toEqual({ clientSecret: 'secret_for_test', sessionId })
     expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({
+      ui_mode: 'embedded_page',
+      mode: 'payment',
+      submit_type: 'donate',
       line_items: [expect.objectContaining({
         price_data: expect.objectContaining({ unit_amount: 1999, currency: 'usd' }),
       })],
