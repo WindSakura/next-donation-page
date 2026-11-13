@@ -137,6 +137,8 @@ export default function DonationPage() {
     }
   }
 
+  const displayAmount = formattedAmount ?? (Number(amount) ? Number(amount).toFixed(2) : amount)
+
   const handleCurrencyChange = (newVal: string) => {
     if (!isDonationCurrency(newVal)) return
     setCurrency(newVal)
@@ -292,65 +294,98 @@ export default function DonationPage() {
         : validationMessage ?? '请输入有效金额'
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')]">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 py-6 sm:py-10 lg:py-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')]">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" aria-hidden="true" />
 
-      <Card className="relative z-10 w-full max-w-lg bg-card/95 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl overflow-hidden">
-        <CardHeader className="space-y-2 pb-3 sm:pb-4 text-center sm:text-left px-4 sm:px-6">
-          <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
-            {clientSecret ? '完成赞助支付' : '请支持我们的战队，为我们的战队投票'}
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-            {clientSecret
-              ? '请在下方完成结账。确认后将自动跳转至支付结果核验页。'
-              : '我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个'}
-          </CardDescription>
-        </CardHeader>
-
-        {clientSecret ? (
-          <CardContent className="space-y-3 sm:space-y-4 px-1 sm:px-6 pt-0">
-            <div className="flex items-center justify-between p-2.5 sm:p-3 mx-1 sm:mx-0 rounded-lg bg-muted/60 border text-xs sm:text-sm">
-              <div>
-                <span className="text-muted-foreground">已选金额：</span>
-                <span className="font-semibold text-foreground">
-                  {currencyConfig.symbol}{amount} {currencyConfig.code}
-                </span>
+      {clientSecret ? (
+        /* 桌面横版宽卡片 / 移动端竖向自适应 */
+        <Card className="relative z-10 w-full max-w-lg lg:max-w-6xl xl:max-w-[1180px] bg-card/95 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl transition-all duration-300">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8 p-3 sm:p-6 lg:p-8">
+            {/* 左列 (桌面宽 320-340px，Sticky 顶部居左；移动端全宽顶部) */}
+            <div className="w-full lg:w-[320px] xl:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-8 mb-4 lg:mb-0">
+              <div className="space-y-1.5 text-center lg:text-left">
+                <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  完成赞助支付
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                  请在<span className="hidden lg:inline">右侧结账面板</span><span className="lg:hidden">下方</span>完成结账。确认后将自动跳转至支付结果核验页。
+                </CardDescription>
               </div>
+
+              {/* 赞助摘要 */}
+              <div className="rounded-xl border bg-muted/40 p-4 space-y-3 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">赞助战队</span>
+                  <span className="text-xs font-semibold text-foreground">支持 DLsite 战队</span>
+                </div>
+                <div className="h-px bg-border/60" />
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">赞助金额</span>
+                  <div className="text-right">
+                    <span className="text-xl sm:text-2xl font-bold text-foreground">
+                      {currencyConfig.symbol}{displayAmount}
+                    </span>
+                    <span className="ml-1 text-xs text-muted-foreground font-mono">
+                      {currencyConfig.code}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground/80 leading-normal italic pt-2 border-t border-border/40">
+                  “我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”
+                </p>
+              </div>
+
+              {/* 返回修改按钮 */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleReturnToEdit}
-                className="h-7 sm:h-8 text-xs flex items-center gap-1.5 px-2.5"
+                className="w-full h-9 text-xs sm:text-sm flex items-center justify-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                返回修改
+                返回修改金额与币种
               </Button>
             </div>
 
-            <div className="w-full min-h-[460px] rounded-lg overflow-hidden border bg-background/50">
-              {stripePromise ? (
-                <EmbeddedCheckoutProvider
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    onComplete: () => {
-                      if (sessionId) {
-                        router.push(`/success?session_id=${encodeURIComponent(sessionId)}`)
-                      }
-                    },
-                  }}
-                >
-                  <EmbeddedCheckout className="w-full" />
-                </EmbeddedCheckoutProvider>
-              ) : (
-                <div className="p-8 text-center text-destructive text-sm" role="alert">
-                  未加载 Stripe 运行环境，无法渲染结账表单。
-                </div>
-              )}
+            {/* 右列 (桌面自适应最大宽 760px；小屏纵向全宽；iframe 自然高度) */}
+            <div className="w-full min-w-0 lg:flex-1 lg:max-w-[760px]">
+              <div className="w-full rounded-xl overflow-hidden border bg-background/80 shadow-sm">
+                {stripePromise ? (
+                  <EmbeddedCheckoutProvider
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      onComplete: () => {
+                        if (sessionId) {
+                          router.push(`/success?session_id=${encodeURIComponent(sessionId)}`)
+                        }
+                      },
+                    }}
+                  >
+                    <EmbeddedCheckout className="w-full" />
+                  </EmbeddedCheckoutProvider>
+                ) : (
+                  <div className="p-8 text-center text-destructive text-sm" role="alert">
+                    未加载 Stripe 运行环境，无法渲染结账表单。
+                  </div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        ) : (
+          </div>
+        </Card>
+      ) : (
+        /* 初始金额表单：保持紧凑居中布局 (max-w-lg) */
+        <Card className="relative z-10 w-full max-w-lg bg-card/95 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl overflow-hidden">
+          <CardHeader className="space-y-2 pb-3 sm:pb-4 text-center sm:text-left px-4 sm:px-6">
+            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
+              请支持我们的战队，为我们的战队投票
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+              我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个
+            </CardDescription>
+          </CardHeader>
+
           <form onSubmit={handleSubmit} noValidate>
             <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pt-0">
               {isConfigMissing && (
@@ -482,8 +517,8 @@ export default function DonationPage() {
               </Button>
             </CardFooter>
           </form>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   )
 }
