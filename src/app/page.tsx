@@ -24,6 +24,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Spotlight } from '@/components/ui/spotlight'
+import { BackgroundGrid } from '@/components/ui/background-beams'
+import { GlowingCard } from '@/components/ui/glowing-card'
 import {
   DONATION_CURRENCIES,
   DEFAULT_CURRENCY,
@@ -34,7 +37,7 @@ import {
   DonationValidationError,
   MAX_DONATION_MINOR_UNITS,
 } from '@/lib/donation'
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Loader2, Sparkles, ShieldCheck } from 'lucide-react'
 
 const rawPublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
 
@@ -90,20 +93,21 @@ function generateRequestId(): string {
 
 export default function DonationPage() {
   const router = useRouter()
+  const currencySelectId = useId()
+  const amountInputId = useId()
+  const amountHintId = useId()
+
   const [currency, setCurrency] = useState<DonationCurrency>(DEFAULT_CURRENCY)
   const currencyConfig = getCurrencyConfig(currency)
   const [amount, setAmount] = useState<string>(currencyConfig.presets[0] ?? '20')
   const [isLoading, setIsLoading] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => generateRequestId())
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
 
-  const amountInputId = useId()
-  const currencySelectId = useId()
-  const amountHintId = useId()
-
+  const amountInputRef = useRef<HTMLInputElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const unmountedRef = useRef(false)
 
@@ -117,22 +121,22 @@ export default function DonationPage() {
     }
   }, [])
 
-  // Calculate parsed amount for dynamic button state
-  let formattedAmount: string | null = null
   let isAmountValid = false
+  let formattedAmount: string | null = null
   let validationMessage: string | null = null
 
-  const trimmedAmount = amount.trim()
-  if (trimmedAmount) {
+  if (amount.trim() === '') {
+    validationMessage = '请输入赞助金额'
+  } else {
     try {
-      const minorUnits = parseDonationAmount(trimmedAmount, currency)
-      formattedAmount = (minorUnits / 100).toFixed(2)
+      const minor = parseDonationAmount(amount.trim(), currency)
       isAmountValid = true
+      formattedAmount = (minor / 100).toFixed(2)
     } catch (err: unknown) {
       if (err instanceof DonationValidationError) {
         validationMessage = err.message
       } else {
-        validationMessage = '请输入有效金额'
+        validationMessage = '请输入有效金额，最多保留两位小数。'
       }
     }
   }
@@ -168,10 +172,16 @@ export default function DonationPage() {
   }
 
   const handleReturnToEdit = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
     setClientSecret(null)
     setSessionId(null)
     setErrorMessage(null)
     setIdempotencyKey(generateRequestId())
+    setTimeout(() => {
+      amountInputRef.current?.focus()
+    }, 50)
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -294,26 +304,53 @@ export default function DonationPage() {
         : validationMessage ?? '请输入有效金额'
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 py-6 sm:py-10 lg:py-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')]">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" aria-hidden="true" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 py-8 sm:py-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')] overflow-x-hidden">
+      {/* 深色半透明遮罩与聚光灯背景 */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-[3px]" aria-hidden="true" />
+      <Spotlight className="-top-36 left-0 sm:left-12" fill="#8b5cf6" />
+      <BackgroundGrid />
 
       {clientSecret ? (
-        /* 桌面横版宽卡片 / 移动端竖向自适应 */
-        <Card className="relative z-10 w-full max-w-lg lg:max-w-6xl xl:max-w-[1180px] bg-card/95 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl transition-all duration-300">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8 p-3 sm:p-6 lg:p-8">
-            {/* 左列 (桌面宽 320-340px，Sticky 顶部居左；移动端全宽顶部) */}
-            <div className="w-full lg:w-[320px] xl:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-8 mb-4 lg:mb-0">
-              <div className="space-y-1.5 text-center lg:text-left">
-                <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+        /* 结账态：桌面横版宽双栏 / 手机单列紧凑条 */
+        <Card className="relative z-10 w-full max-w-lg lg:max-w-6xl xl:max-w-[1180px] bg-card/95 backdrop-blur-xl shadow-2xl border border-white/10 rounded-2xl transition-all duration-300">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8 p-3.5 sm:p-6 lg:p-8">
+            {/* 移动端可访问标题（桌面隐藏避免重复） */}
+            <h1 className="sr-only lg:hidden">完成赞助支付</h1>
+
+            {/* 移动端紧凑顶部条：直接展示金额与返回修改，避免下推 Stripe 支付区 */}
+            <div className="lg:hidden flex items-center justify-between p-3 rounded-xl border border-white/10 bg-muted/40 mb-3.5">
+              <div>
+                <div className="text-[11px] text-muted-foreground">赞助金额</div>
+                <div className="text-base font-bold text-foreground">
+                  {currencyConfig.symbol}{displayAmount}{' '}
+                  <span className="text-xs font-mono text-muted-foreground">{currencyConfig.code}</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleReturnToEdit}
+                className="h-8 px-2.5 text-xs flex items-center gap-1.5 border-white/10"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                修改金额
+              </Button>
+            </div>
+
+            {/* 桌面左列（宽 320-340px，Sticky 顶部居左；内容精炼平衡高度） */}
+            <div className="hidden lg:block w-[320px] xl:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-8">
+              <div className="space-y-1.5 text-left">
+                <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                   完成赞助支付
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  请在<span className="hidden lg:inline">右侧结账面板</span><span className="lg:hidden">下方</span>完成结账。确认后将自动跳转至支付结果核验页。
+                  请在右侧面板完成结账。确认后将自动跳转至支付结果核验页。
                 </CardDescription>
               </div>
 
               {/* 赞助摘要 */}
-              <div className="rounded-xl border bg-muted/40 p-4 space-y-3 text-left">
+              <div className="rounded-xl border border-white/10 bg-muted/30 p-4 space-y-3 text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">赞助战队</span>
                   <span className="text-xs font-semibold text-foreground">支持 DLsite 战队</span>
@@ -322,7 +359,7 @@ export default function DonationPage() {
                 <div className="flex items-baseline justify-between">
                   <span className="text-xs font-medium text-muted-foreground">赞助金额</span>
                   <div className="text-right">
-                    <span className="text-xl sm:text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-foreground">
                       {currencyConfig.symbol}{displayAmount}
                     </span>
                     <span className="ml-1 text-xs text-muted-foreground font-mono">
@@ -335,22 +372,28 @@ export default function DonationPage() {
                 </p>
               </div>
 
+              {/* 安全提示 */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/5 text-[11px] text-muted-foreground">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>由 Stripe 处理支付，本站不存储卡号信息</span>
+              </div>
+
               {/* 返回修改按钮 */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleReturnToEdit}
-                className="w-full h-9 text-xs sm:text-sm flex items-center justify-center gap-1.5"
+                className="w-full h-9 text-xs sm:text-sm flex items-center justify-center gap-1.5 border-white/10"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 返回修改金额与币种
               </Button>
             </div>
 
-            {/* 右列 (桌面自适应最大宽 760px；小屏纵向全宽；iframe 自然高度) */}
+            {/* 右列（桌面自适应最大宽 760px；小屏纵向全宽；iframe 自然高度；严禁3D倾斜） */}
             <div className="w-full min-w-0 lg:flex-1 lg:max-w-[760px]">
-              <div className="w-full rounded-xl overflow-hidden border bg-background/80 shadow-sm">
+              <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-background/90 shadow-xl">
                 {stripePromise ? (
                   <EmbeddedCheckoutProvider
                     stripe={stripePromise}
@@ -366,7 +409,7 @@ export default function DonationPage() {
                     <EmbeddedCheckout className="w-full" />
                   </EmbeddedCheckoutProvider>
                 ) : (
-                  <div className="p-8 text-center text-destructive text-sm" role="alert">
+                  <div className="p-8 text-center text-rose-300 text-sm" role="alert">
                     未加载 Stripe 运行环境，无法渲染结账表单。
                   </div>
                 )}
@@ -375,149 +418,202 @@ export default function DonationPage() {
           </div>
         </Card>
       ) : (
-        /* 初始金额表单：保持紧凑居中布局 (max-w-lg) */
-        <Card className="relative z-10 w-full max-w-lg bg-card/95 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl overflow-hidden">
-          <CardHeader className="space-y-2 pb-3 sm:pb-4 text-center sm:text-left px-4 sm:px-6">
-            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
-              请支持我们的战队，为我们的战队投票
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
-              我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个
-            </CardDescription>
-          </CardHeader>
-
-          <form onSubmit={handleSubmit} noValidate>
-            <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pt-0">
-              {isConfigMissing && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs sm:text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2.5"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                  <div className="leading-relaxed">
-                    在线支付暂不可用，请稍后再试。
-                  </div>
-                </div>
-              )}
-
-              {/* Currency Selector */}
-              <div className="space-y-1.5 sm:space-y-2">
-                <label
-                  htmlFor={currencySelectId}
-                  className="block text-sm font-medium text-foreground"
-                >
-                  币种 / Currency
-                </label>
-                <Select value={currency} onValueChange={handleCurrencyChange} disabled={isLoading}>
-                  <SelectTrigger id={currencySelectId} className="w-full bg-background/80 h-10">
-                    <SelectValue placeholder="选择币种" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DONATION_CURRENCIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.label} ({c.code}) · {c.symbol}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        /* 初始金额态：桌面有冲击力的横版双栏 / 手机单列 */
+        <div className="relative z-10 w-full max-w-lg lg:max-w-5xl xl:max-w-6xl flex flex-col lg:flex-row lg:items-stretch lg:gap-8 gap-6">
+          {/* 左侧叙事与品牌介绍 (桌面展示有冲击力的横版构图) */}
+          <div className="w-full lg:w-[460px] xl:w-[500px] shrink-0 flex flex-col justify-between text-left space-y-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-xs font-medium text-violet-300">
+                <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                <span>支持 DLsite 战队 · 赞助通道</span>
               </div>
 
-              {/* Preset Amounts */}
-              <fieldset className="space-y-1.5 sm:space-y-2">
-                <legend className="text-sm font-medium text-foreground">
-                  快捷金额预设
-                </legend>
-                <div className="grid grid-cols-4 gap-2">
-                  {currencyConfig.presets.map((preset) => {
-                    const isSelected = amount === preset
-                    return (
-                      <Button
-                        key={preset}
-                        type="button"
-                        variant={isSelected ? 'default' : 'outline'}
-                        size="sm"
-                        aria-pressed={isSelected}
-                        disabled={isLoading}
-                        onClick={() => handleSelectPreset(preset)}
-                        className={`h-9 font-medium transition-all ${
-                          isSelected
-                            ? 'ring-2 ring-primary ring-offset-1 font-bold'
-                            : 'bg-background/80 hover:bg-accent'
-                        }`}
-                      >
-                        {currencyConfig.symbol}{preset}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </fieldset>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-[1.2]">
+                请支持我们的战队，
+                <br />
+                为我们的战队投票
+              </h1>
 
-              {/* Custom Amount Input with Flexbox Layout */}
-              <div className="space-y-1.5 sm:space-y-2">
-                <label
-                  htmlFor={amountInputId}
-                  className="block text-sm font-medium text-foreground"
-                >
-                  赞助金额
-                </label>
-                <div className="flex rounded-md border border-input bg-background/80 shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden transition-all">
-                  <span
-                    className="inline-flex items-center px-3 text-muted-foreground text-sm font-semibold select-none bg-muted/30 border-r border-border/60"
-                    aria-hidden="true"
-                  >
-                    {currencyConfig.symbol}
-                  </span>
-                  <input
-                    id={amountInputId}
-                    name="amount"
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    spellCheck="false"
-                    placeholder="添加社会点数"
-                    value={amount}
-                    onChange={handleAmountInputChange}
-                    disabled={isLoading}
-                    aria-describedby={amountHintId}
-                    className="flex-1 min-w-0 bg-transparent px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                  <span
-                    className="inline-flex items-center px-3 text-xs text-muted-foreground font-mono select-none bg-muted/10 border-l border-border/60"
-                    aria-hidden="true"
-                  >
-                    {currencyConfig.code}
-                  </span>
-                </div>
-                <p id={amountHintId} className="text-xs text-muted-foreground">
-                  支持区间：{currencyConfig.symbol}{(currencyConfig.minMinorUnits / 100).toFixed(2)} - {currencyConfig.symbol}{(MAX_DONATION_MINOR_UNITS / 100).toFixed(2)} {currencyConfig.code}
+              {/* 战队名言卡片 */}
+              <div className="relative p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-lg border-l-4 border-l-violet-500">
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed italic">
+                  “我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”
                 </p>
               </div>
+            </div>
 
-              {/* Error Alert */}
-              {errorMessage && (
-                <div
-                  role="alert"
-                  aria-live="polite"
-                  className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs sm:text-sm text-destructive flex items-start gap-2.5 animate-in fade-in-50"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1 leading-relaxed">{errorMessage}</div>
+            {/* 特性背书清单 */}
+            <div className="hidden lg:grid grid-cols-1 gap-2.5 pt-4 border-t border-white/10 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-violet-400 shrink-0" />
+                <span>由 Stripe 处理支付，本站不存储卡号信息</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>支持多币种与自选赞助金额</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                <span>支付完成后自动核对结果</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 右侧金额选择面板 (Aceternity 风格微光旋转边框卡片) */}
+          <GlowingCard containerClassName="w-full lg:flex-1">
+            <CardHeader className="space-y-2 pb-3 sm:pb-4 text-left px-4 sm:px-6 pt-5 sm:pt-6">
+              <CardTitle as="h2" className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                选择赞助金额
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                选择币种与金额，继续完成赞助支付
+              </CardDescription>
+            </CardHeader>
+
+            <form onSubmit={handleSubmit} noValidate>
+              <CardContent className="space-y-4 sm:space-y-5 px-4 sm:px-6 pt-0">
+                {isConfigMissing && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs sm:text-sm text-amber-200 flex items-start gap-2.5"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                    <div className="leading-relaxed">
+                      在线支付暂不可用，请稍后再试。
+                    </div>
+                  </div>
+                )}
+
+                {/* 币种选择 */}
+                <div className="space-y-1.5 sm:space-y-2">
+                  <label
+                    htmlFor={currencySelectId}
+                    className="block text-xs sm:text-sm font-medium text-foreground"
+                  >
+                    币种 / Currency
+                  </label>
+                  <Select value={currency} onValueChange={handleCurrencyChange} disabled={isLoading}>
+                    <SelectTrigger id={currencySelectId} className="w-full bg-background/80 h-10 border-white/10">
+                      <SelectValue placeholder="选择币种" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DONATION_CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.label} ({c.code}) · {c.symbol}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </CardContent>
 
-            <CardFooter className="pt-2 px-4 sm:px-6 pb-6">
-              <Button
-                type="submit"
-                className="w-full h-11 text-base font-semibold shadow-md transition-all"
-                disabled={isLoading || !isAmountValid || isConfigMissing}
-              >
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2 shrink-0" />}
-                {buttonText}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+                {/* 快捷金额预设 */}
+                <fieldset className="space-y-1.5 sm:space-y-2">
+                  <legend className="text-xs sm:text-sm font-medium text-foreground">
+                    快捷金额预设
+                  </legend>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {currencyConfig.presets.map((preset) => {
+                      const isSelected = amount === preset
+                      return (
+                        <Button
+                          key={preset}
+                          type="button"
+                          variant={isSelected ? 'default' : 'outline'}
+                          size="sm"
+                          aria-pressed={isSelected}
+                          disabled={isLoading}
+                          onClick={() => handleSelectPreset(preset)}
+                          className={`h-11 font-medium transition-all ${
+                            isSelected
+                              ? 'ring-2 ring-primary ring-offset-1 ring-offset-background font-bold shadow-md bg-primary text-primary-foreground'
+                              : 'bg-background/60 hover:bg-white/10 border-white/10'
+                          }`}
+                        >
+                          {currencyConfig.symbol}{preset}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+
+                {/* 自定义金额输入与就近错误提示 */}
+                <div className="space-y-1.5 sm:space-y-2">
+                  <label
+                    htmlFor={amountInputId}
+                    className="block text-xs sm:text-sm font-medium text-foreground"
+                  >
+                    赞助金额
+                  </label>
+                  <div className="flex rounded-md border border-white/15 bg-background/80 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background overflow-hidden transition-all">
+                    <span
+                      className="inline-flex items-center px-3 text-muted-foreground text-sm font-semibold select-none bg-muted/40 border-r border-white/10"
+                      aria-hidden="true"
+                    >
+                      {currencyConfig.symbol}
+                    </span>
+                    <input
+                      ref={amountInputRef}
+                      id={amountInputId}
+                      name="amount"
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      spellCheck="false"
+                      placeholder="添加社会点数"
+                      value={amount}
+                      onChange={handleAmountInputChange}
+                      disabled={isLoading}
+                      aria-invalid={!isAmountValid && amount.trim() !== ''}
+                      aria-describedby={amountHintId}
+                      className="flex-1 min-w-0 bg-transparent px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                    />
+                    <span
+                      className="inline-flex items-center px-3 text-xs text-muted-foreground font-mono select-none bg-muted/20 border-l border-white/10"
+                      aria-hidden="true"
+                    >
+                      {currencyConfig.code}
+                    </span>
+                  </div>
+
+                  {/* 格式校验提示：不符合区间时提供即时行内错误提示 */}
+                  {!isAmountValid && amount.trim() !== '' ? (
+                    <p id={amountHintId} role="alert" className="text-xs text-rose-300 flex items-center gap-1 mt-1 font-medium">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{validationMessage}</span>
+                    </p>
+                  ) : (
+                    <p id={amountHintId} className="text-xs text-muted-foreground">
+                      支持区间：{currencyConfig.symbol}{(currencyConfig.minMinorUnits / 100).toFixed(2)} - {currencyConfig.symbol}{(MAX_DONATION_MINOR_UNITS / 100).toFixed(2)} {currencyConfig.code}
+                    </p>
+                  )}
+                </div>
+
+                {/* 全局错误提示 (API 创建失败等) */}
+                {errorMessage && (
+                  <div
+                    role="alert"
+                    aria-live="polite"
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs sm:text-sm text-rose-300 flex items-start gap-2.5 animate-in fade-in-50"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                    <div className="flex-1 leading-relaxed">{errorMessage}</div>
+                  </div>
+                )}
+              </CardContent>
+
+              <CardFooter className="pt-2 px-4 sm:px-6 pb-6">
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-semibold shadow-lg transition-all"
+                  disabled={isLoading || !isAmountValid || isConfigMissing}
+                >
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2 shrink-0" />}
+                  {buttonText}
+                </Button>
+              </CardFooter>
+            </form>
+          </GlowingCard>
+        </div>
       )}
     </div>
   )
