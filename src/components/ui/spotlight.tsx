@@ -7,17 +7,17 @@ interface SpotlightProps {
 }
 
 /**
- * 视觉风格参考 Aceternity 聚光氛围；采用原生 CSS 径向渐变与高斯柔化独立实现，无第三方 SVG 几何依赖。
+ * 柔和聚光氛围；采用原生 CSS 径向渐变与高斯柔化独立实现，不刺眼、不遮挡背景艺术细节。
  */
-export function Spotlight({ className, fill = '#8b5cf6' }: SpotlightProps) {
+export function Spotlight({ className, fill = '#6366f1' }: SpotlightProps) {
   return (
     <div
       className={cn(
-        'animate-spotlight pointer-events-none absolute -top-40 -left-20 z-0 h-[600px] w-[600px] sm:h-[800px] sm:w-[800px] rounded-full blur-[100px] sm:blur-[140px] opacity-25',
+        'animate-spotlight pointer-events-none absolute -top-40 -left-20 z-0 h-[500px] w-[500px] sm:h-[750px] sm:w-[750px] rounded-full blur-[90px] sm:blur-[130px] opacity-20 dark:opacity-30 motion-reduce:animate-none motion-reduce:opacity-20',
         className
       )}
       style={{
-        background: `radial-gradient(circle at 40% 40%, ${fill} 0%, rgba(56, 189, 248, 0.4) 45%, transparent 75%)`,
+        background: `radial-gradient(circle at 45% 45%, ${fill} 0%, rgba(56, 189, 248, 0.25) 50%, transparent 75%)`,
       }}
       aria-hidden="true"
     />

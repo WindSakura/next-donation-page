@@ -243,17 +243,18 @@ export default function SuccessPage() {
   const { category, data, sessionId, errorMessage, isRefreshing } = viewState
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 pt-24 sm:pt-24 md:pt-24 pb-8 sm:pb-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')] overflow-x-hidden">
-      <div className="absolute inset-0 bg-white/75 dark:bg-black/70 backdrop-blur-[3px]" aria-hidden="true" />
-      <Spotlight className="-top-36 left-0 sm:left-12" fill="#8b5cf6" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 pt-20 sm:pt-24 md:pt-24 pb-8 sm:pb-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')] overflow-x-hidden">
+      {/* 渐变遮罩与微环境光 */}
+      <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-[4px] transition-colors duration-300" aria-hidden="true" />
+      <Spotlight className="-top-36 left-0 sm:left-12" fill="#6366f1" />
       <BackgroundGrid />
 
-      <Card className="relative z-10 w-full max-w-lg bg-card/95 backdrop-blur-xl shadow-2xl border border-slate-300/70 dark:border-white/10 rounded-2xl overflow-hidden p-6 sm:p-8 text-center">
+      <Card className="relative z-10 w-full max-w-lg bg-card/95 backdrop-blur-2xl shadow-2xl border border-border/80 dark:border-white/10 rounded-2xl overflow-hidden p-6 sm:p-8 text-center transition-all duration-300">
         {category === 'loading' && (
           <div className="py-8 space-y-4">
-            <Loader2 className="w-14 h-14 text-primary animate-spin mx-auto" />
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white">正在核对支付结果...</h1>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            <Loader2 className="w-12 h-12 text-primary animate-spin motion-reduce:animate-none mx-auto" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">正在核对支付结果...</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
               请稍候，系统正在向支付服务核验交易状态。
             </p>
           </div>
@@ -268,28 +269,28 @@ export default function SuccessPage() {
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
                 十分感谢您对我们战队DLsite的支持
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 您的赞助付款已确认，十分感谢您对战队的支持！
               </CardDescription>
             </div>
 
             {/* 详情卡片 */}
-            <div className="p-4 rounded-xl bg-muted/40 border border-slate-300/70 dark:border-white/10 text-left text-sm space-y-2">
+            <div className="p-4 sm:p-5 rounded-2xl bg-muted/40 border border-border/70 dark:border-white/10 text-left text-sm space-y-2.5">
               <div className="flex justify-between items-center py-1 border-b border-border/50">
-                <span className="text-muted-foreground">赞助金额</span>
-                <span className="font-bold text-base text-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">赞助金额</span>
+                <span className="font-extrabold text-base sm:text-lg text-foreground">
                   {formatAmount(data?.amountTotal ?? null, data?.currency ?? null)}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-border/50">
-                <span className="text-muted-foreground">支付状态</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800/50">
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">支付状态</span>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                   付款已确认
                 </span>
               </div>
               {sessionId && (
                 <div className="flex justify-between items-center py-1 text-xs">
-                  <span className="text-muted-foreground">会话编号</span>
+                  <span className="text-muted-foreground font-medium">会话编号</span>
                   <div className="flex items-center gap-1.5 font-mono text-muted-foreground">
                     <span className="truncate max-w-[140px] sm:max-w-[200px]" title={sessionId}>
                       {sessionId}
@@ -297,7 +298,7 @@ export default function SuccessPage() {
                     <button
                       type="button"
                       onClick={handleCopySessionId}
-                      className="p-1 rounded hover:bg-slate-900/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                       title="复制完整会话编号"
                       aria-label={copiedType === 'session' ? '已复制会话编号' : '复制完整会话编号'}
                     >
@@ -322,7 +323,7 @@ export default function SuccessPage() {
             )}
 
             <CardFooter className="p-0 pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild className="w-full sm:w-auto h-11 px-8 font-semibold shadow-lg">
+              <Button asChild className="w-full sm:w-auto h-12 px-8 font-semibold shadow-lg">
                 <Link href="/">返回首页 / 再赞助一笔</Link>
               </Button>
             </CardFooter>
@@ -333,12 +334,12 @@ export default function SuccessPage() {
           <div className="space-y-6">
             <div className="space-y-3">
               <div className="inline-flex p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 mx-auto">
-                <Clock className="w-12 h-12 animate-pulse" />
+                <Clock className="w-12 h-12 animate-pulse motion-reduce:animate-none" />
               </div>
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
                 支付正在处理中
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 支付渠道正在确认中，尚未收到最终付款确认。请稍候并点击下方刷新按钮查看最新状态，请勿重复发起付款。
               </CardDescription>
             </div>
@@ -346,7 +347,7 @@ export default function SuccessPage() {
             <div
               role="status"
               aria-live="polite"
-              className="p-3.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed text-left flex items-start gap-2.5"
+              className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed text-left flex items-start gap-2.5"
             >
               <Clock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
               <div>
@@ -355,16 +356,16 @@ export default function SuccessPage() {
             </div>
 
             {data?.amountTotal && (
-              <div className="p-4 rounded-xl bg-muted/40 border border-slate-300/70 dark:border-white/10 text-left text-sm space-y-2">
+              <div className="p-4 sm:p-5 rounded-2xl bg-muted/40 border border-border/70 dark:border-white/10 text-left text-sm space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">付款金额</span>
-                  <span className="font-semibold text-foreground">
+                  <span className="text-xs sm:text-sm text-muted-foreground font-medium">付款金额</span>
+                  <span className="font-bold text-base text-foreground">
                     {formatAmount(data.amountTotal, data.currency)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">处理进度</span>
-                  <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  <span className="text-xs sm:text-sm text-muted-foreground font-medium">处理进度</span>
+                  <span className="text-xs text-amber-700 dark:text-amber-400 font-semibold">
                     等待渠道确认
                   </span>
                 </div>
@@ -375,12 +376,12 @@ export default function SuccessPage() {
               <Button
                 onClick={handleManualRetry}
                 disabled={isRefreshing}
-                className="w-full sm:w-auto h-11 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
+                className="w-full sm:w-auto h-12 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
                 {isRefreshing ? '正在核对...' : '刷新查询状态'}
               </Button>
-              <Button asChild variant="outline" className="w-full sm:w-auto h-11 px-6 border-slate-300/70 dark:border-white/10">
+              <Button asChild variant="outline" className="w-full sm:w-auto h-12 px-6 border-border/80 dark:border-white/10">
                 <Link href="/">返回首页</Link>
               </Button>
             </CardFooter>
@@ -396,7 +397,7 @@ export default function SuccessPage() {
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
                 支付尚未完成
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 此支付会话处于开启状态，但尚未完成支付。若您未完成付款，可返回重新发起；若已在渠道扣款，请稍候重试查询。
               </CardDescription>
             </div>
@@ -406,13 +407,13 @@ export default function SuccessPage() {
                 <Button
                   onClick={handleManualRetry}
                   disabled={isRefreshing}
-                  className="w-full sm:w-auto h-11 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto h-12 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
                   {isRefreshing ? '正在重试...' : '重试查询状态'}
                 </Button>
               )}
-              <Button asChild variant="outline" className="w-full sm:w-auto h-11 px-6 flex items-center gap-1.5 border-slate-300/70 dark:border-white/10">
+              <Button asChild variant="outline" className="w-full sm:w-auto h-12 px-6 flex items-center gap-1.5 border-border/80 dark:border-white/10">
                 <Link href="/">
                   <ArrowLeft className="w-4 h-4" />
                   返回赞助首页
@@ -431,7 +432,7 @@ export default function SuccessPage() {
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
                 支付会话已过期
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 会话已过期，当前尚未确认付款；若已扣款请勿重复支付，可点击下方重试查询或稍后再看。
               </CardDescription>
             </div>
@@ -441,13 +442,13 @@ export default function SuccessPage() {
                 <Button
                   onClick={handleManualRetry}
                   disabled={isRefreshing}
-                  className="w-full sm:w-auto h-11 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto h-12 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
                   {isRefreshing ? '正在重试...' : '重试查询状态'}
                 </Button>
               )}
-              <Button asChild variant="outline" className="w-full sm:w-auto h-11 px-6 flex items-center gap-1.5 border-slate-300/70 dark:border-white/10">
+              <Button asChild variant="outline" className="w-full sm:w-auto h-12 px-6 flex items-center gap-1.5 border-border/80 dark:border-white/10">
                 <Link href="/">
                   <ArrowLeft className="w-4 h-4" />
                   返回重新发起
@@ -466,13 +467,13 @@ export default function SuccessPage() {
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-sky-600 dark:text-sky-400">
                 此记录无需付款
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 此赞助记录经确认无需进行支付扣款。
               </CardDescription>
             </div>
 
             <CardFooter className="p-0 pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild className="w-full sm:w-auto h-11 px-8 font-semibold shadow-lg">
+              <Button asChild className="w-full sm:w-auto h-12 px-8 font-semibold shadow-lg">
                 <Link href="/">返回赞助首页</Link>
               </Button>
             </CardFooter>
@@ -488,7 +489,7 @@ export default function SuccessPage() {
               <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
                 支付状态核验失败
               </CardTitle>
-              <CardDescription className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              <CardDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
                 无法确认这笔支付记录，请稍后重试。
               </CardDescription>
             </div>
@@ -497,7 +498,7 @@ export default function SuccessPage() {
               <div
                 role="alert"
                 aria-live="polite"
-                className="p-3.5 rounded-lg border border-destructive/30 bg-destructive/10 text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed text-left flex items-start gap-2.5"
+                className="p-3.5 rounded-xl border border-destructive/30 bg-destructive/10 text-xs sm:text-sm text-rose-700 dark:text-rose-300 leading-relaxed text-left flex items-start gap-2.5"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                 <div className="flex-1">{errorMessage}</div>
@@ -510,16 +511,16 @@ export default function SuccessPage() {
                   <Button
                     onClick={handleManualRetry}
                     disabled={isRefreshing}
-                    className="w-full sm:w-auto h-11 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto h-12 px-6 font-semibold shadow-lg flex items-center justify-center gap-2"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin motion-reduce:animate-none' : ''}`} />
                     {isRefreshing ? '正在重试...' : '重试查询状态'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleCopyDiagnostics}
-                    className="w-full sm:w-auto h-11 px-4 text-xs flex items-center gap-1.5 border-slate-300/70 dark:border-white/10"
+                    className="w-full sm:w-auto h-12 px-4 text-xs flex items-center gap-1.5 border-border/80 dark:border-white/10"
                     aria-label={copiedType === 'diagnostics' ? '已复制排查信息' : '复制排查信息'}
                   >
                     {copiedType === 'diagnostics' ? (
@@ -534,7 +535,7 @@ export default function SuccessPage() {
                   </span>
                 </>
               )}
-              <Button asChild variant="outline" className="w-full sm:w-auto h-11 px-6 flex items-center gap-1.5 border-slate-300/70 dark:border-white/10">
+              <Button asChild variant="outline" className="w-full sm:w-auto h-12 px-6 flex items-center gap-1.5 border-border/80 dark:border-white/10">
                 <Link href="/">
                   <ArrowLeft className="w-4 h-4" />
                   返回赞助首页

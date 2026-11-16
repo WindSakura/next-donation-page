@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       return paymentJson({ code: 'INVALID_REQUEST_ID', error: '支付请求标识无效，请刷新页面后重试。' }, 400)
     }
     const session = await getStripe().checkout.sessions.create({
-      ui_mode: 'embedded_page',
+      ui_mode: 'elements',
       line_items: [{
         price_data: {
           currency: body.currency.toLowerCase(),
@@ -49,7 +49,6 @@ export async function POST(req: Request) {
       }],
       mode: 'payment',
       locale: 'zh',
-      submit_type: 'donate',
       return_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
     }, { idempotencyKey: `donation-${key}` })
     if (!session.client_secret) {

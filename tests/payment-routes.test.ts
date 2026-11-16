@@ -57,14 +57,15 @@ describe('create checkout session', () => {
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(await response.json()).toEqual({ clientSecret: 'secret_for_test', sessionId })
     expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({
-      ui_mode: 'embedded_page',
+      ui_mode: 'elements',
       mode: 'payment',
-      submit_type: 'donate',
       line_items: [expect.objectContaining({
         price_data: expect.objectContaining({ unit_amount: 1999, currency: 'usd' }),
       })],
       return_url: 'https://donate.example/success?session_id={CHECKOUT_SESSION_ID}',
     }), { idempotencyKey: `donation-${idempotencyKey}` })
+    // The Elements API rejects this full-page-only option.
+    expect(mocks.create.mock.calls[0][0]).not.toHaveProperty('submit_type')
   })
 
   it('preserves the idempotency key when the same request is retried', async () => {

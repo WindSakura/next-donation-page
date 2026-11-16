@@ -1,71 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 224 71% 8%;
+    --background: 220 25% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 8%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 8%;
- 
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 220 20% 93%;
-    --secondary-foreground: 224 71% 12%;
- 
-    --muted: 220 22% 94%;
-    --muted-foreground: 215 18% 36%;
- 
-    --accent: 255 45% 94%;
-    --accent-foreground: 224 71% 12%;
- 
-    --destructive: 0 75% 45%;
-    --destructive-foreground: 210 40% 98%;
+    --card-foreground: 222 47% 11%;
 
-    --border: 220 18% 84%;
-    --input: 220 18% 82%;
-    --ring: 263.4 70% 52%;
- 
-    --radius: 0.75rem;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 250 84% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 18% 94%;
+    --secondary-foreground: 222 47% 12%;
+
+    --muted: 220 16% 94%;
+    --muted-foreground: 215 16% 40%;
+
+    --accent: 248 85% 96%;
+    --accent-foreground: 248 85% 40%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 86%;
+    --input: 220 16% 84%;
+    --ring: 250 84% 54%;
+
+    --radius: 0.875rem;
   }
- 
+
   .dark {
-    --background: 224 71% 4%;
+    --background: 224 45% 4.5%;
     --foreground: 210 40% 98%;
- 
-    --card: 224 71% 6%;
+
+    --card: 224 40% 8%;
     --card-foreground: 210 40% 98%;
- 
-    --popover: 224 71% 6%;
+
+    --popover: 224 40% 8%;
     --popover-foreground: 210 40% 98%;
- 
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 217.2 32.6% 17.5%;
+
+    --primary: 250 92% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 223 30% 15%;
     --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 68%;
- 
-    --accent: 217.2 32.6% 22%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 75% 45%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 20%;
-    --input: 217.2 32.6% 20%;
-    --ring: 263.4 70% 60%;
+
+    --muted: 223 30% 14%;
+    --muted-foreground: 218 18% 70%;
+
+    --accent: 250 40% 18%;
+    --accent-foreground: 250 90% 92%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 223 30% 20%;
+    --input: 223 30% 20%;
+    --ring: 250 92% 66%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -89,14 +89,12 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Aceternity 风格关键帧与动效 */
+/* Ambient micro-interactions & animations */
 @keyframes spotlight {
   0% {
-    opacity: 0;
-    transform: translate(-30%, -30%) scale(0.6);
+    transform: translate(-20%, -20%) scale(0.85);
   }
   100% {
-    opacity: 1;
     transform: translate(0, 0) scale(1);
   }
 }
@@ -110,6 +108,15 @@ input[type="number"] {
   }
 }
 
+@keyframes ambient-glow {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -120,28 +127,38 @@ input[type="number"] {
 }
 
 .animate-spotlight {
-  animation: spotlight 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: spotlight 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-spin-slow {
-  animation: spin-slow 14s linear infinite;
+  animation: spin-slow 24s linear infinite;
+}
+
+.animate-ambient-glow {
+  animation: ambient-glow 6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-spotlight,
   .animate-spin-slow,
+  .animate-ambient-glow,
   .animate-pulse,
-  .animate-in {
+  .animate-in,
+  .animate-spin {
     animation: none !important;
     transform: none !important;
-    opacity: 0.9 !important;
   }
   .glowing-border-layer {
     animation: none !important;
-    transform: rotate(45deg) !important;
+    transform: none !important;
     opacity: 0.7 !important;
   }
-  * {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

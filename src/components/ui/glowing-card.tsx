@@ -7,8 +7,8 @@ interface GlowingCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * 视觉风格参考 Aceternity 旋转微光边框；采用纯 CSS 锥形渐变与关键帧动画独立实现。
- * 在减少动效模式下保持静态柔和边框可见；内层保留充足边距以确保内部表单焦点环不被裁剪。
+ * 具有质感微光的卡片容器；外层通过精致渐变微光与内层晶莹磨砂玻璃衬托，
+ * 避免刺眼的无限快速旋转，支持减少动效偏好。
  */
 export function GlowingCard({
   children,
@@ -19,20 +19,20 @@ export function GlowingCard({
   return (
     <div
       className={cn(
-        'relative rounded-2xl p-[1px] overflow-hidden group/glow',
+        'relative rounded-2xl p-[1px] transition-all duration-300 group/glow',
         containerClassName
       )}
       {...props}
     >
-      {/* 动态光晕旋转层（prefers-reduced-motion 下通过 CSS 停止旋转并保持静态边框） */}
+      {/* 质感渐变微边框：常态轻柔沉稳，悬浮时自然聚光 */}
       <div
-        className="glowing-border-layer absolute -inset-[100%] animate-spin-slow opacity-[0.65] group-hover/glow:opacity-95 transition-opacity duration-500 pointer-events-none bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,transparent_270deg,#8b5cf6_315deg,#38bdf8_360deg)]"
+        className="glowing-border-layer absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-500 opacity-60 group-hover/glow:opacity-100 bg-gradient-to-br from-primary/30 via-sky-400/20 to-primary/10 dark:from-primary/40 dark:via-sky-400/20 dark:to-transparent"
         aria-hidden="true"
       />
       {/* 实体卡片层 */}
       <div
         className={cn(
-          'relative z-10 w-full h-full rounded-[calc(1rem-1px)] bg-card/95 backdrop-blur-xl border border-slate-300/70 dark:border-white/10 shadow-2xl',
+          'relative z-10 w-full h-full rounded-[calc(1rem-1px)] bg-card/90 dark:bg-card/95 backdrop-blur-xl border border-border/70 dark:border-white/10 shadow-xl transition-shadow duration-300 group-hover/glow:shadow-2xl',
           className
         )}
       >

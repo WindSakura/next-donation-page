@@ -6,17 +6,16 @@ interface BackgroundGridProps {
 }
 
 /**
- * 视觉风格参考 Aceternity UI (Background Grid & Beams)；代码为独立 CSS/SVG 实现，未复制代码库 Pro 源码。
+ * 细腻的几何微网格底纹，通过径向渐变遮罩自然淡出，增强空间纵深感。
  */
 export function BackgroundGrid({ className }: BackgroundGridProps) {
   return (
     <div
       className={cn(
-        'pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.14] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_40%,#000_65%,transparent_100%)]',
+        'pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.07] dark:opacity-[0.16] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_40%,#000_60%,transparent_100%)]',
         className
       )}
       aria-hidden="true"
     />
   )
 }
-

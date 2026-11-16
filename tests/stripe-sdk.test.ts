@@ -60,7 +60,7 @@ afterEach(() => {
 })
 
 describe('Stripe SDK transport compatibility', () => {
-  it('encodes an embedded donation with the pinned API version and idempotency key', async () => {
+  it('encodes an Elements donation with the pinned API version and idempotency key', async () => {
     transport.fetch.mockResolvedValue(providerResponse({
       id: sessionId, object: 'checkout.session', client_secret: 'test_client_secret',
     }))
@@ -77,9 +77,9 @@ describe('Stripe SDK transport compatibility', () => {
     expect(headers.get('idempotency-key')).toBe(`donation-${idempotencyKey}`)
     expect(typeof options?.body).toBe('string')
     const params = new URLSearchParams(String(options?.body))
-    expect(params.get('ui_mode')).toBe('embedded_page')
+    expect(params.get('ui_mode')).toBe('elements')
     expect(params.get('mode')).toBe('payment')
-    expect(params.get('submit_type')).toBe('donate')
+    expect(params.has('submit_type')).toBe(false)
     expect(params.get('line_items[0][price_data][unit_amount]')).toBe('1999')
     expect(params.get('line_items[0][price_data][currency]')).toBe('usd')
     expect(params.get('return_url')).toBe('https://donate.example/success?session_id={CHECKOUT_SESSION_ID}')
@@ -87,7 +87,7 @@ describe('Stripe SDK transport compatibility', () => {
 
   it('retrieves a paid session through the SDK without returning customer details', async () => {
     transport.fetch.mockResolvedValue(providerResponse({
-      id: sessionId, object: 'checkout.session', ui_mode: 'embedded_page',
+      id: sessionId, object: 'checkout.session', ui_mode: 'elements',
       payment_status: 'paid', status: 'complete', amount_total: 1999, currency: 'usd',
       customer_details: { email: 'private@example.invalid' },
     }))

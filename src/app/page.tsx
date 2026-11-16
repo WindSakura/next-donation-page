@@ -4,10 +4,7 @@ import { useState, useCallback, useRef, useEffect, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js/pure'
 import type { Stripe } from '@stripe/stripe-js'
-import {
-  EmbeddedCheckoutProvider,
-  EmbeddedCheckout,
-} from '@stripe/react-stripe-js'
+import { DonationCheckout } from '@/components/donation-checkout'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -45,7 +42,7 @@ let cachedStripePromise: Promise<Stripe | null> | null = null
 
 function getStripePromise(key: string): Promise<Stripe | null> {
   if (!cachedStripePromise) {
-    cachedStripePromise = loadStripe(key).catch((err) => {
+    cachedStripePromise = loadStripe(key, { locale: 'zh' }).catch((err) => {
       console.error('[stripe] Failed to load Stripe SDK', err)
       cachedStripePromise = null
       throw err
@@ -120,6 +117,12 @@ export default function DonationPage() {
       }
     }
   }, [])
+
+  const handleCheckoutComplete = useCallback(() => {
+    if (sessionId) {
+      router.push(`/success?session_id=${encodeURIComponent(sessionId)}`)
+    }
+  }, [router, sessionId])
 
   let isAmountValid = false
   let formattedAmount: string | null = null
@@ -296,31 +299,31 @@ export default function DonationPage() {
   const isConfigMissing = !rawPublishableKey
 
   const buttonText = isLoading
-    ? '正在建立支付连接...'
+    ? '正在建立安全支付连接...'
     : isConfigMissing
       ? '在线支付暂不可用'
       : isAmountValid && formattedAmount
-        ? `继续支付 ${currencyConfig.symbol}${formattedAmount}`
+        ? `继续赞助 ${currencyConfig.symbol}${formattedAmount}`
         : validationMessage ?? '请输入有效金额'
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 pt-24 sm:pt-24 md:pt-24 pb-8 sm:pb-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')] overflow-x-hidden">
-      {/* 深色半透明遮罩与聚光灯背景 */}
-      <div className="absolute inset-0 bg-white/75 dark:bg-black/70 backdrop-blur-[3px]" aria-hidden="true" />
-      <Spotlight className="-top-36 left-0 sm:left-12" fill="#8b5cf6" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-8 pt-20 sm:pt-24 md:pt-24 pb-8 sm:pb-12 bg-cover bg-center bg-no-repeat bg-[url('/ero.jpg')] overflow-x-hidden">
+      {/* 渐变遮罩与微环境光：确保文字高对比与二次元背景自然交融 */}
+      <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-[4px] transition-colors duration-300" aria-hidden="true" />
+      <Spotlight className="-top-36 left-0 sm:left-12" fill="#6366f1" />
       <BackgroundGrid />
 
       {clientSecret ? (
         /* 结账态：桌面横版宽双栏 / 手机单列紧凑条 */
-        <Card className="relative z-10 w-full max-w-lg lg:max-w-6xl xl:max-w-[1180px] bg-card/95 backdrop-blur-xl shadow-2xl border border-slate-300/70 dark:border-white/10 rounded-2xl transition-all duration-300">
+        <Card className="relative z-10 w-full max-w-lg lg:max-w-6xl xl:max-w-[1180px] bg-card/95 backdrop-blur-2xl shadow-2xl border border-border/80 dark:border-white/10 rounded-2xl transition-all duration-300">
           <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8 p-3.5 sm:p-6 lg:p-8">
-            {/* 移动端可访问标题（桌面隐藏避免重复） */}
+            {/* 移动端可访问标题 */}
             <h1 className="sr-only lg:hidden">完成赞助支付</h1>
 
-            {/* 移动端紧凑顶部条：直接展示金额与返回修改，避免下推 Stripe 支付区 */}
-            <div className="lg:hidden flex items-center justify-between p-3 rounded-xl border border-slate-300/70 dark:border-white/10 bg-muted/40 mb-3.5">
+            {/* 移动端紧凑顶栏：直接展示金额与返回修改 */}
+            <div className="lg:hidden flex items-center justify-between p-3.5 rounded-xl border border-border/70 dark:border-white/10 bg-muted/40 mb-3.5">
               <div>
-                <div className="text-[11px] text-muted-foreground">赞助金额</div>
+                <div className="text-[11px] font-medium text-muted-foreground">赞助金额</div>
                 <div className="text-base font-bold text-foreground">
                   {currencyConfig.symbol}{displayAmount}{' '}
                   <span className="text-xs font-mono text-muted-foreground">{currencyConfig.code}</span>
@@ -331,14 +334,14 @@ export default function DonationPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleReturnToEdit}
-                className="h-8 px-2.5 text-xs flex items-center gap-1.5 border-slate-300/70 dark:border-white/10"
+                className="h-8 px-2.5 text-xs flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 修改金额
               </Button>
             </div>
 
-            {/* 桌面左列（宽 320-340px，Sticky 顶部居左；内容精炼平衡高度） */}
+            {/* 桌面左列（宽 320-340px，Sticky 顶部居左） */}
             <div className="hidden lg:block w-[320px] xl:w-[340px] shrink-0 space-y-4 lg:sticky lg:top-8">
               <div className="space-y-1.5 text-left">
                 <CardTitle as="h1" className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
@@ -350,7 +353,7 @@ export default function DonationPage() {
               </div>
 
               {/* 赞助摘要 */}
-              <div className="rounded-xl border border-slate-300/70 dark:border-white/10 bg-muted/30 p-4 space-y-3 text-left">
+              <div className="rounded-2xl border border-border/80 dark:border-white/10 bg-muted/30 p-4 space-y-3 text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">赞助战队</span>
                   <span className="text-xs font-semibold text-foreground">支持 DLsite 战队</span>
@@ -359,23 +362,23 @@ export default function DonationPage() {
                 <div className="flex items-baseline justify-between">
                   <span className="text-xs font-medium text-muted-foreground">赞助金额</span>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-extrabold text-foreground tracking-tight">
                       {currencyConfig.symbol}{displayAmount}
                     </span>
-                    <span className="ml-1 text-xs text-muted-foreground font-mono">
+                    <span className="ml-1.5 text-xs text-muted-foreground font-mono">
                       {currencyConfig.code}
                     </span>
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground/80 leading-normal italic pt-2 border-t border-border/40">
+                <p className="text-[11px] text-muted-foreground/80 leading-relaxed italic pt-2 border-t border-border/40 select-none">
                   “我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”
                 </p>
               </div>
 
               {/* 安全提示 */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 dark:bg-white/5 border border-slate-300/60 dark:border-white/5 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border/60 dark:border-white/5 text-xs text-muted-foreground">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>由 Stripe 处理支付，本站不存储卡号信息</span>
+                <span>支付信息由 Stripe 安全处理，本站不存储卡号</span>
               </div>
 
               {/* 返回修改按钮 */}
@@ -384,30 +387,22 @@ export default function DonationPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleReturnToEdit}
-                className="w-full h-9 text-xs sm:text-sm flex items-center justify-center gap-1.5 border-slate-300/70 dark:border-white/10"
+                className="w-full h-10 text-xs sm:text-sm flex items-center justify-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 返回修改金额与币种
               </Button>
             </div>
 
-            {/* 右列（桌面自适应最大宽 760px；小屏纵向全宽；iframe 自然高度；严禁3D倾斜） */}
+            {/* 右列：Stripe 动态主题结算容器 */}
             <div className="w-full min-w-0 lg:flex-1 lg:max-w-[760px]">
-              <div className="w-full rounded-xl overflow-hidden border border-slate-300/70 dark:border-white/10 bg-background/90 shadow-xl">
-                {stripePromise ? (
-                  <EmbeddedCheckoutProvider
+              <div className="w-full rounded-2xl overflow-hidden border border-border/80 dark:border-white/10 bg-background/90 dark:bg-background/80 shadow-xl">
+                {stripePromise && clientSecret ? (
+                  <DonationCheckout
                     stripe={stripePromise}
-                    options={{
-                      clientSecret,
-                      onComplete: () => {
-                        if (sessionId) {
-                          router.push(`/success?session_id=${encodeURIComponent(sessionId)}`)
-                        }
-                      },
-                    }}
-                  >
-                    <EmbeddedCheckout className="w-full" />
-                  </EmbeddedCheckoutProvider>
+                    clientSecret={clientSecret}
+                    onComplete={handleCheckoutComplete}
+                  />
                 ) : (
                   <div className="p-8 text-center text-rose-700 dark:text-rose-300 text-sm" role="alert">
                     未加载 Stripe 运行环境，无法渲染结账表单。
@@ -418,48 +413,48 @@ export default function DonationPage() {
           </div>
         </Card>
       ) : (
-        /* 初始金额态：桌面有冲击力的横版双栏 / 手机单列 */
+        /* 初始金额态：桌面横版双栏 / 手机单列 */
         <div className="relative z-10 w-full max-w-lg lg:max-w-5xl xl:max-w-6xl flex flex-col lg:flex-row lg:items-stretch lg:gap-8 gap-6">
-          {/* 左侧叙事与品牌介绍 (桌面展示有冲击力的横版构图) */}
+          {/* 左侧叙事与品牌介绍 */}
           <div className="w-full lg:w-[460px] xl:w-[500px] shrink-0 flex flex-col justify-between text-left space-y-6">
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-xs font-medium text-violet-700 dark:text-violet-300">
-                <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-xs font-semibold text-primary">
+                <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>支持 DLsite 战队 · 赞助通道</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-[1.2]">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground leading-[1.2]">
                 请支持我们的战队，
                 <br />
                 为我们的战队投票
               </h1>
 
               {/* 战队名言卡片 */}
-              <div className="relative p-4 rounded-xl border border-slate-300/70 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-md shadow-lg border-l-4 border-l-violet-500">
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic">
+              <div className="relative p-4 sm:p-5 rounded-2xl border border-border/80 dark:border-white/10 bg-card/85 backdrop-blur-md shadow-lg border-l-4 border-l-primary">
+                <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed italic select-none">
                   “我的出租屋里真的有很多蟑螂，但我认识的粥批真的没有几个”
                 </p>
               </div>
             </div>
 
             {/* 特性背书清单 */}
-            <div className="hidden lg:grid grid-cols-1 gap-2.5 pt-4 border-t border-slate-300/70 dark:border-white/10 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
-                <span>由 Stripe 处理支付，本站不存储卡号信息</span>
+            <div className="hidden lg:grid grid-cols-1 gap-3 pt-5 border-t border-border/70 dark:border-white/10 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>支付信息由 Stripe 安全处理，本站不存储卡号</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
                 <span>支持多币种与自选赞助金额</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                 <span>支付完成后自动核对结果</span>
               </div>
             </div>
           </div>
 
-          {/* 右侧金额选择面板 (Aceternity 风格微光旋转边框卡片) */}
+          {/* 右侧金额选择面板 */}
           <GlowingCard containerClassName="w-full lg:flex-1">
             <CardHeader className="space-y-2 pb-3 sm:pb-4 text-left px-4 sm:px-6 pt-5 sm:pt-6">
               <CardTitle as="h2" className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
@@ -475,7 +470,7 @@ export default function DonationPage() {
                 {isConfigMissing && (
                   <div
                     role="alert"
-                    className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 flex items-start gap-2.5"
+                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 flex items-start gap-2.5"
                   >
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                     <div className="leading-relaxed">
@@ -488,12 +483,12 @@ export default function DonationPage() {
                 <div className="space-y-1.5 sm:space-y-2">
                   <label
                     htmlFor={currencySelectId}
-                    className="block text-xs sm:text-sm font-medium text-foreground"
+                    className="block text-xs sm:text-sm font-semibold text-foreground"
                   >
                     币种 / Currency
                   </label>
                   <Select value={currency} onValueChange={handleCurrencyChange} disabled={isLoading}>
-                    <SelectTrigger id={currencySelectId} className="w-full bg-background/80 h-10 border-slate-300/70 dark:border-white/10">
+                    <SelectTrigger id={currencySelectId} className="w-full h-11 border-border/80 dark:border-white/10">
                       <SelectValue placeholder="选择币种" />
                     </SelectTrigger>
                     <SelectContent>
@@ -506,9 +501,9 @@ export default function DonationPage() {
                   </Select>
                 </div>
 
-                {/* 快捷金额预设 */}
+                {/* 快捷金额预设 (微交互分段芯片选择) */}
                 <fieldset className="space-y-1.5 sm:space-y-2">
-                  <legend className="text-xs sm:text-sm font-medium text-foreground">
+                  <legend className="text-xs sm:text-sm font-semibold text-foreground">
                     快捷金额预设
                   </legend>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -525,8 +520,8 @@ export default function DonationPage() {
                           onClick={() => handleSelectPreset(preset)}
                           className={`h-11 font-medium transition-all ${
                             isSelected
-                              ? 'ring-2 ring-primary ring-offset-1 ring-offset-background font-bold shadow-md bg-primary text-primary-foreground'
-                              : 'bg-background/60 hover:bg-slate-900/10 dark:hover:bg-white/10 border-slate-300/70 dark:border-white/10'
+                              ? 'ring-2 ring-primary ring-offset-2 ring-offset-background font-bold shadow-md bg-primary text-primary-foreground'
+                              : 'bg-background/70 hover:bg-accent/80 hover:text-accent-foreground border-border/80 dark:border-white/10'
                           }`}
                         >
                           {currencyConfig.symbol}{preset}
@@ -540,13 +535,13 @@ export default function DonationPage() {
                 <div className="space-y-1.5 sm:space-y-2">
                   <label
                     htmlFor={amountInputId}
-                    className="block text-xs sm:text-sm font-medium text-foreground"
+                    className="block text-xs sm:text-sm font-semibold text-foreground"
                   >
                     赞助金额
                   </label>
-                  <div className="flex rounded-md border border-slate-300/80 dark:border-white/15 bg-background/80 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background overflow-hidden transition-all">
+                  <div className="flex rounded-xl border border-input bg-background/80 backdrop-blur-sm shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background overflow-hidden transition-all">
                     <span
-                      className="inline-flex items-center px-3 text-muted-foreground text-sm font-semibold select-none bg-muted/40 border-r border-slate-300/70 dark:border-white/10"
+                      className="inline-flex items-center px-3 text-muted-foreground text-sm font-semibold select-none bg-muted/40 border-r border-border/60"
                       aria-hidden="true"
                     >
                       {currencyConfig.symbol}
@@ -568,7 +563,7 @@ export default function DonationPage() {
                       className="flex-1 min-w-0 bg-transparent px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                     />
                     <span
-                      className="inline-flex items-center px-3 text-xs text-muted-foreground font-mono select-none bg-muted/20 border-l border-slate-300/70 dark:border-white/10"
+                      className="inline-flex items-center px-3 text-xs text-muted-foreground font-mono select-none bg-muted/20 border-l border-border/60"
                       aria-hidden="true"
                     >
                       {currencyConfig.code}
@@ -577,8 +572,8 @@ export default function DonationPage() {
 
                   {/* 格式校验提示：不符合区间时提供即时行内错误提示 */}
                   {!isAmountValid && amount.trim() !== '' ? (
-                    <p id={amountHintId} role="alert" className="text-xs text-rose-700 dark:text-rose-300 flex items-center gap-1 mt-1 font-medium">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <p id={amountHintId} role="alert" className="text-xs text-rose-700 dark:text-rose-300 flex items-center gap-1.5 mt-1 font-medium">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600 dark:text-rose-400" />
                       <span>{validationMessage}</span>
                     </p>
                   ) : (
@@ -593,7 +588,7 @@ export default function DonationPage() {
                   <div
                     role="alert"
                     aria-live="polite"
-                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs sm:text-sm text-rose-700 dark:text-rose-300 flex items-start gap-2.5 animate-in fade-in-50"
+                    className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs sm:text-sm text-rose-700 dark:text-rose-300 flex items-start gap-2.5 animate-in fade-in-50"
                   >
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                     <div className="flex-1 leading-relaxed">{errorMessage}</div>
@@ -604,7 +599,7 @@ export default function DonationPage() {
               <CardFooter className="pt-2 px-4 sm:px-6 pb-6">
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-semibold shadow-lg transition-all"
+                  className="w-full h-12 text-base font-semibold shadow-lg transition-all duration-150"
                   disabled={isLoading || !isAmountValid || isConfigMissing}
                 >
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2 shrink-0" />}

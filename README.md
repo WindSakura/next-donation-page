@@ -1,6 +1,6 @@
 # Next Donation Page
 
-基于 Next.js App Router、React、Tailwind CSS 和 Stripe Embedded Checkout 的个人支持页面。
+基于 Next.js App Router、React、Tailwind CSS 和 Stripe Checkout Elements 的个人支持页面。
 
 ## 本地运行
 
@@ -35,7 +35,7 @@ npm test
 npm run build
 ```
 
-自动测试使用模拟 Stripe 响应，不会发起真实支付或创建真实 Checkout Session。生产启动使用 `npm start`。
+自动测试使用模拟 Stripe 响应，不会发起真实支付或创建真实 Checkout Session。支付组件测试使用 jsdom、真实 React Stripe Provider 和模拟 Stripe.js SDK，验证主题更新、输入保留、重复提交锁定、失败重试与快捷支付事件。生产启动使用 `npm start`。
 
 `.github/workflows/ci.yml` 会在 main 推送和 PR 上执行安装、lint、类型检查、测试和生产构建，不需要 Stripe 密钥。
 
@@ -57,17 +57,25 @@ npm run build
 
 1. 创建接口验证 JSON、金额、币种和请求来源。
 2. 前端为每次确认金额生成幂等标识，重试同一次创建时复用，修改金额后生成新标识。
-3. 服务端通过 Stripe 创建嵌入式结账，返回 `clientSecret` 和 `sessionId`。
-4. Stripe 的完成回调和返回链接进入 `/success?session_id=…`。
+3. 服务端创建 `ui_mode: 'elements'` 的 Stripe Checkout Session，返回 `clientSecret` 和 `sessionId`。前端通过 `CheckoutElementsProvider` 渲染联系方式、支付方式和可用的快捷支付组件，敏感字段仍在 Stripe iframe 内。
+4. 前端通过 `checkout.confirm` 确认支付，完成回调和支付方式返回链接进入 `/success?session_id=…`。
 5. 结果页通过服务端向 Stripe 查询真实状态，区分已付款、等待到账、尚未完成、过期和查询失败。URL 参数的存在本身不表示付款成功。
 
 查询接口只返回状态、金额和币种，不返回邮箱；支付接口响应禁止缓存，页面不发送 Referrer。
 
-服务端 Stripe SDK 固定为 `23.1.0`，API 显式固定为该 SDK 对应的 `2026-10-28.endive`，与类型定义保持一致。嵌入式结账使用新 API 要求的 `ui_mode: 'embedded_page'`，替代旧值 `embedded`；金额精度、幂等键和支付结果判断保持原有规则。后续升级时需要同时核对 SDK 迁移指南、API 版本和 Checkout 参数。此配置仅指定本站请求使用的版本，不修改 Stripe 账户默认 API 版本或其他 webhook 的版本。
+服务端 Stripe SDK 固定为 `23.1.0`，API 显式固定为该 SDK 对应的 `2026-10-28.endive`，与类型定义保持一致。为支持动态浅/深色，支付界面从整页 `embedded_page` 切换为 Checkout Elements，并移除该模式不接受的 `submit_type`；金额精度、幂等键和支付结果判断保持原有规则。后续升级时需要同时核对 SDK 迁移指南、API 版本和 Checkout 参数。此配置仅指定本站请求使用的版本，不修改 Stripe 账户默认 API 版本或其他 webhook 的版本。
 
 回归测试除了模拟业务响应，也使用真实 SDK 和模拟 HTTP 传输，检查 API 版本头、Checkout 参数编码、查询结果以及 Stripe 错误的转换；不会访问 Stripe 或创建支付记录。部署后的实际支付体验仍需在 Stripe 测试模式验收。
 
 本项目没有赞助榜、权益发放或本地捐赠数据库。如增加这些业务，应新增验签、幂等的 Stripe webhook，以支付事件更新持久化记录，并覆盖延迟付款成功和失败事件；不要以浏览器返回页面作为入账依据。
+
+## 界面与主题
+
+页面保留原有动漫背景和战队文案，视觉与交互参考 Beautiful UI、beUI、Rare UI、Transitions.dev 和 shadcn/ui。桌面使用横向布局，小屏使用单列；动效遵循 `prefers-reduced-motion`。
+
+右上角支持跟随系统、浅色、深色三种主题。Stripe 字段通过官方 Appearance API 在浅色时使用 `stripe`、深色时使用 `night`；颜色配置位于 `src/lib/stripe-appearance.ts`。`next-themes` 的 `resolvedTheme` 同步系统偏好和手动选择，React Stripe Provider 通过 `changeAppearance` 更新字段外观，切换主题不会重新创建 Session 或重挂载输入框。仅主动点击加载失败后的重试按钮才会重载组件，仍使用同一个 Session。
+
+快捷支付按钮由 Stripe 按账户设置、设备和浏览器能力决定是否展示；Apple Pay、Google Pay 等钱包需要在 Stripe 后台完成适用域名注册。支付界面改动需要前后端一起部署。发布后建议在测试模式验证银行卡、钱包和跳转支付方式。
 
 ## 依赖说明
 

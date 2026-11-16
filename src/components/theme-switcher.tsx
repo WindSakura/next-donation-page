@@ -29,7 +29,7 @@ export function ThemeSwitcher() {
     <div
       role="group"
       aria-label="界面主题切换"
-      className="fixed top-4 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] inline-flex items-center gap-1 p-1 rounded-xl border border-slate-300/70 dark:border-white/10 bg-white/85 dark:bg-slate-950/80 backdrop-blur-xl shadow-lg"
+      className="fixed top-4 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] inline-flex items-center gap-1 p-1 rounded-2xl border border-border/80 dark:border-white/10 bg-card/90 backdrop-blur-xl shadow-lg transition-all duration-200"
     >
       {THEME_OPTIONS.map(({ value, label, Icon }) => {
         const isActive = currentTheme === value
@@ -41,10 +41,10 @@ export function ThemeSwitcher() {
             aria-pressed={mounted ? isActive : undefined}
             onClick={() => setTheme(value)}
             className={cn(
-              'inline-flex items-center justify-center gap-1.5 h-11 px-2.5 sm:px-3 rounded-lg text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-60 disabled:cursor-not-allowed',
+              'relative inline-flex items-center justify-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-3.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60 disabled:cursor-not-allowed select-none active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none',
               isActive
                 ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                : 'text-slate-700 hover:bg-slate-900/10 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/70'
             )}
           >
             <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
