@@ -31,7 +31,7 @@ function fakeElement(label: string, readyEvent?: unknown) {
   }
 }
 
-function setup() {
+function setup(walletsAvailable = true) {
   const session = {
     id: 'cs_test_ui_1234567890',
     status: { type: 'open' },
@@ -42,7 +42,9 @@ function setup() {
   })
   const payment = fakeElement('Stripe 测试支付字段')
   const contact = fakeElement('Stripe 测试邮箱字段')
-  const express = fakeElement('Stripe 测试快捷支付', { availablePaymentMethods: { link: true } })
+  const express = fakeElement('Stripe 测试快捷支付', {
+    availablePaymentMethods: walletsAvailable ? { link: true } : undefined,
+  })
   const sdk = {
     on: vi.fn(),
     loadActions: vi.fn().mockResolvedValue({
@@ -95,6 +97,49 @@ afterEach(() => {
 })
 
 describe('themed Stripe checkout', () => {
+  it('requests visible Link priority without disabling other eligible wallets', async () => {
+    const { props, sdk } = setup()
+    render(createElement(DonationCheckout, props))
+    await waitUntilReady()
+    // Verify the request to Stripe; real availability still requires its account/domain checks.
+    expect(sdk.createExpressCheckoutElement).toHaveBeenCalledWith({
+      buttonHeight: undefined,
+      buttonTheme: undefined,
+      buttonType: undefined,
+      paymentMethods: undefined,
+      paymentMethodOrder: ['link'],
+      layout: { overflow: 'never' },
+    })
+  })
+
+  it('keeps express checkout mounted and updates its separator as wallets become available', async () => {
+    const { props, express } = setup(false)
+    render(createElement(DonationCheckout, props))
+    await waitUntilReady()
+    expect(screen.queryByText('或使用其他支付方式')).toBeNull()
+    expect(express.mount).toHaveBeenCalledTimes(1)
+
+    act(() => express.emit('availablepaymentmethodschange', {
+      elementType: 'expressCheckout',
+      paymentMethods: { link: { available: true }, googlePay: { available: false } },
+    }))
+    expect(screen.getByText('或使用其他支付方式')).toBeTruthy()
+
+    act(() => express.emit('availablepaymentmethodschange', {
+      elementType: 'expressCheckout',
+      paymentMethods: { link: { available: false } },
+    }))
+    expect(screen.queryByText('或使用其他支付方式')).toBeNull()
+    act(() => express.emit('availablepaymentmethodschange', {
+      elementType: 'expressCheckout',
+      paymentMethods: undefined,
+    }))
+    expect(screen.queryByText('或使用其他支付方式')).toBeNull()
+    expect(express.mount).toHaveBeenCalledTimes(1)
+    expect(express.destroy).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /确认赞助/ }).hasAttribute('disabled')).toBe(false)
+  })
+
   it('follows manual and system theme changes without recreating the session or clearing fields', async () => {
     const { stripe, sdk, payment, props } = setup()
     render(createElement(

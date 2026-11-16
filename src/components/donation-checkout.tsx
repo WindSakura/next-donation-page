@@ -9,7 +9,11 @@ import {
   PaymentElement,
   useCheckoutElements,
 } from '@stripe/react-stripe-js/checkout'
-import type { Stripe, StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js'
+import type {
+  Stripe,
+  StripeCheckoutExpressCheckoutElementOptions,
+  StripeExpressCheckoutElementConfirmEvent,
+} from '@stripe/stripe-js'
 import { AlertCircle, Loader2, LockKeyhole, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getCheckoutAppearance } from '@/lib/stripe-appearance'
@@ -40,6 +44,18 @@ function CheckoutFields({
   const ready = state.type === 'success' && paymentReady && contactReady
   const sessionComplete = state.type === 'success' && state.checkout.status.type === 'complete'
   const sessionExpired = state.type === 'success' && state.checkout.status.type === 'expired'
+
+  const expressCheckoutOptions = useMemo<StripeCheckoutExpressCheckoutElementOptions>(
+    () => ({
+      paymentMethodOrder: ['link'],
+      layout: { overflow: 'never' },
+      buttonHeight: undefined,
+      buttonTheme: undefined,
+      buttonType: undefined,
+      paymentMethods: undefined,
+    }),
+    [],
+  )
 
   useEffect(() => {
     mountedRef.current = true
@@ -122,9 +138,13 @@ function CheckoutFields({
       {/* Mount Elements while actions load: they are part of SDK initialization. */}
       <div className={hasWallets ? 'space-y-3' : ''}>
         <ExpressCheckoutElement
+          options={expressCheckoutOptions}
           onConfirm={(event) => { void confirmPayment(event) }}
           onReady={({ availablePaymentMethods }) => {
             setHasWallets(Boolean(availablePaymentMethods && Object.values(availablePaymentMethods).some(Boolean)))
+          }}
+          onAvailablePaymentMethodsChange={({ paymentMethods }) => {
+            setHasWallets(Boolean(paymentMethods && Object.values(paymentMethods).some((method) => method?.available)))
           }}
           onLoadError={() => setHasWallets(false)}
         />

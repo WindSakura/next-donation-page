@@ -75,7 +75,15 @@ npm run build
 
 右上角支持跟随系统、浅色、深色三种主题。Stripe 字段通过官方 Appearance API 在浅色时使用 `stripe`、深色时使用 `night`；颜色配置位于 `src/lib/stripe-appearance.ts`。`next-themes` 的 `resolvedTheme` 同步系统偏好和手动选择，React Stripe Provider 通过 `changeAppearance` 更新字段外观，切换主题不会重新创建 Session 或重挂载输入框。仅主动点击加载失败后的重试按钮才会重载组件，仍使用同一个 Session。
 
-快捷支付按钮由 Stripe 按账户设置、设备和浏览器能力决定是否展示；Apple Pay、Google Pay 等钱包需要在 Stripe 后台完成适用域名注册。支付界面改动需要前后端一起部署。发布后建议在测试模式验证银行卡、钱包和跳转支付方式。
+快捷支付组件将可用的 Link 排在前面，并展开所有可用按钮，不收进溢出菜单。排序和布局不能强制启用 Stripe 判定不可用的钱包；组件保持挂载，按 Stripe 的可用状态事件更新分隔提示，即使没有快捷支付也能使用普通支付表单。
+
+如果 Link 未显示，请检查：
+
+1. 在 Stripe 后台的 [支付方式设置](https://dashboard.stripe.com/settings/payment_methods) 中确认 Link 已启用。服务端保留动态支付方式，不使用固定列表过滤其他支付方式。
+2. 在 [支付方式域名](https://dashboard.stripe.com/settings/payment_method_domains) 中注册实际付款页面的完整域名，例如 `donate.yakum0.moe`，并确认域名已启用；仅注册 `yakum0.moe` 不能覆盖其子域名。Link、Apple Pay、Google Pay 均在需要注册的范围内。上线前必须在正式模式注册，仅在测试环境注册不够；自定义域名与 Vercel 预览域名也分别核对。
+3. 使用 HTTPS 和受支持的浏览器。按 Stripe 当前说明，Express Checkout 的 Link 支持桌面 Chrome、Edge、Safari 等，但不支持桌面 Firefox 或应用内 WebView；实际展示也受账户、地区与币种限制。
+
+参考 Stripe 官方的 [域名注册说明](https://docs.stripe.com/payments/payment-methods/pmd-registration) 和 [Express Checkout 可用性说明](https://docs.stripe.com/elements/express-checkout-element)。测试中的模拟钱包事件仅验证前端配置与状态处理，不能证明正式账户已提供 Link。支付界面改动需要前后端一起部署。发布后建议在测试模式验证银行卡、钱包和跳转支付方式。
 
 ## 依赖说明
 
